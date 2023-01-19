@@ -1,4 +1,4 @@
-# Emulator2000
+# Emulator 2000
 Seiko Cal. UW01, UW02, W030 (UC-2000 etc) emulator in Python
 
 ![image](https://user-images.githubusercontent.com/31337838/213396640-1a855514-b922-4f45-bfe8-7b6bddc4482a.png)
