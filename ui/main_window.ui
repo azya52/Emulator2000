@@ -21,7 +21,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>C:/Users/azya5/.designer/assets/uc2000.svg</normaloff>C:/Users/azya5/.designer/assets/uc2000.svg</iconset>
+    <normaloff>../assets/uc2000.svg</normaloff>../assets/uc2000.svg</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_4">
@@ -2153,9 +2153,6 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
-              <property name="inputMask">
-               <string>hh</string>
-              </property>
              </widget>
             </item>
             <item>
@@ -2408,6 +2405,7 @@
      </property>
      <addaction name="actionUC2000"/>
      <addaction name="actionDATA2000"/>
+     <addaction name="actionUC3000"/>
      <addaction name="actionSpacetronic"/>
     </widget>
     <addaction name="actionOpenIntMem"/>
@@ -2425,7 +2423,7 @@
     <property name="title">
      <string>Speed</string>
     </property>
-    <addaction name="actionSpeedOrig"/>
+    <addaction name="actionSpeedx1"/>
     <addaction name="actionSpeedx2"/>
     <addaction name="actionSpeedx5"/>
     <addaction name="actionSpeedx10"/>
@@ -2494,11 +2492,6 @@
     <string>DATA-2000 (UW01-0020)</string>
    </property>
   </action>
-  <action name="actionUC3000">
-   <property name="text">
-    <string>UC-3000 (UW02-0020)</string>
-   </property>
-  </action>
   <action name="actionSpacetronic">
    <property name="text">
     <string>Spacetronic (W030-001A)</string>
@@ -2538,12 +2531,15 @@
     <string>Shift+F5</string>
    </property>
   </action>
-  <action name="actionSpeedOrig">
+  <action name="actionSpeedx1">
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
-    <string>Original (32768Hz)</string>
+    <string>x1 (32768Hz)</string>
    </property>
   </action>
   <action name="actionSpeedx2">
@@ -2605,6 +2601,11 @@
   <action name="actionserialDataEdit">
    <property name="text">
     <string>serialDataEdit</string>
+   </property>
+  </action>
+  <action name="actionUC3000">
+   <property name="text">
+    <string>UC-3000 (UW02-0020)</string>
    </property>
   </action>
  </widget>

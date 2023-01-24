@@ -106,7 +106,7 @@ class Window(QtWidgets.QMainWindow):
         self.dispCtrlTable.resizeColumnsToContents()
 
         groupTool = QtGui.QActionGroup(self)
-        groupTool.addAction(self.actionSpeedOrig)
+        groupTool.addAction(self.actionSpeedx1)
         groupTool.addAction(self.actionSpeedx2)
         groupTool.addAction(self.actionSpeedx5)
         groupTool.addAction(self.actionSpeedx10)
@@ -247,7 +247,7 @@ class Window(QtWidgets.QMainWindow):
         self._watchUI.stop()
 
     @pyqtSlot()
-    def on_actionSpeedOrig_triggered(self):
+    def on_actionSpeedx1_triggered(self):
         self._watchUI.setSpeed(1)
 
     @pyqtSlot()
@@ -310,12 +310,12 @@ class Window(QtWidgets.QMainWindow):
         self._watchUI.close()
         self._watchUI = WatchUI(self._examine, 
             "./assets/uc2000.svg", 
-            "./assets/UC2000.rom", 
+            "./assets/uc2000.rom", 
             None,
             self.portNameCombo.currentText())
         self.deviceWidget.layout().addWidget(self._watchUI)
         self._settings.setValue('watch/face', "./assets/uc2000.svg")
-        self._settings.setValue('watch/internal_mem', "./assets/UC2000.rom")
+        self._settings.setValue('watch/internal_mem', "./assets/uc2000.rom")
         self._settings.setValue('watch/external_mem', None)
 
     @pyqtSlot()
@@ -323,12 +323,12 @@ class Window(QtWidgets.QMainWindow):
         self._watchUI.close()
         self._watchUI = WatchUI(self._examine, 
             "./assets/data2000.svg", 
-            "./assets/UC2000.rom", 
+            "./assets/uc2000.rom", 
             None,
             self.portNameCombo.currentText())
         self.deviceWidget.layout().addWidget(self._watchUI)
         self._settings.setValue('watch/face', "./assets/data2000.svg")
-        self._settings.setValue('watch/internal_mem', "./assets/UC2000.rom")
+        self._settings.setValue('watch/internal_mem', "./assets/uc2000.rom")
         self._settings.setValue('watch/external_mem', None)
 
     @pyqtSlot()
@@ -343,6 +343,20 @@ class Window(QtWidgets.QMainWindow):
         self._settings.setValue('watch/face', "./assets/spacetronic.svg")
         self._settings.setValue('watch/internal_mem', "./assets/spacetronik.rom")
         self._settings.setValue('watch/external_mem', "./assets/spacetronic.ram")
+
+    @pyqtSlot()
+    def on_actionUC3000_triggered(self):
+        #self.deviceWidget.layout().removeWidget(self.watchUI)
+        self._watchUI.close()
+        self._watchUI = WatchUI(self._examine, 
+            "./assets/uc3000.svg", 
+            "./assets/uc3000.rom", 
+            None,
+            self.portNameCombo.currentText())
+        self.deviceWidget.layout().addWidget(self._watchUI)
+        self._settings.setValue('watch/face', "./assets/uc3000.svg")
+        self._settings.setValue('watch/internal_mem', "./assets/uc3000.rom")
+        self._settings.setValue('watch/external_mem', None)
 
     @pyqtSlot(dict, bool)
     def _examine(self, info, force):
