@@ -153,6 +153,7 @@ class Display():
             self._setPixelOpacity()
 
     def _setCtrlRegClearCharRegs(self, value):
+        #to-do clearing is stop after switching to direct mode?
         self._DDRAM = [0] * CHAR_COUNT
 
     def _setCtrlRegForceRedraw(self, value):
@@ -173,7 +174,7 @@ class Display():
 
     def writeDDRAMaddr(self, addr, value):
         if (self._DCTRL[0x7] or ((addr == DCTRL_OFFSET + 0x7) and (value & 0x1))):
-            if (self._DCTRL[0x7] and (not self._DCTRL[0x6])):
+            if (not self._DCTRL[0x6] and (self._scancharCounter < (32 * 16))):
                 self._directDraw(self._scancharCounter, value)
             self._scancharCounter += 1
             
