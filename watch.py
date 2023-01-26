@@ -42,7 +42,7 @@ class Watch(QObject):
         self._portName = portName
 
     @pyqtSlot()
-    def run(self):       
+    def run(self):
         self._beeper = Beeper()
         self._memory = Memory(self._internalMem, self._externalMem)
         self._display = Display()
@@ -92,6 +92,8 @@ class Watch(QObject):
         self.setInternalMemSignal.disconnect()
         self.setExternalMemSignal.disconnect()
         self.setPortNameSignal.disconnect()
+        self.setSpeedSignal.disconnect()
+        self.receiveSignal.disconnect()
         self._serial.close()
         self._beeper.stop()
 

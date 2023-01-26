@@ -306,7 +306,6 @@ class Window(QtWidgets.QMainWindow):
 
     @pyqtSlot()
     def on_actionUC2000_triggered(self):
-        #self.deviceWidget.layout().removeWidget(self.watchUI)
         self._watchUI.close()
         self._watchUI = WatchUI(self._examine, 
             "./assets/uc2000.svg", 
@@ -336,17 +335,16 @@ class Window(QtWidgets.QMainWindow):
         self._watchUI.close()
         self._watchUI = WatchUI(self._examine, 
             "./assets/spacetronic.svg", 
-            "./assets/spacetronik.rom", 
+            "./assets/spacetronic.rom", 
             "./assets/spacetronic.ram",
             self.portNameCombo.currentText())
         self.deviceWidget.layout().addWidget(self._watchUI)
         self._settings.setValue('watch/face', "./assets/spacetronic.svg")
-        self._settings.setValue('watch/internal_mem', "./assets/spacetronik.rom")
+        self._settings.setValue('watch/internal_mem', "./assets/spacetronic.rom")
         self._settings.setValue('watch/external_mem', "./assets/spacetronic.ram")
 
     @pyqtSlot()
     def on_actionUC3000_triggered(self):
-        #self.deviceWidget.layout().removeWidget(self.watchUI)
         self._watchUI.close()
         self._watchUI = WatchUI(self._examine, 
             "./assets/uc3000.svg", 
@@ -432,6 +430,7 @@ class Window(QtWidgets.QMainWindow):
                 itemAdr.setCheckState(Qt.CheckState.Unchecked)
 
                 for i, instr in info["LISTING"].items():
+                    self.asmTable.removeRow(i)
                     item = itemAdr.clone()
                     item.setText('0x%0.3X:' % i)
                     self.asmTable.setItem(i, 0, item)
@@ -540,10 +539,7 @@ class WatchUI(QtWidgets.QGraphicsView):
     def receive(self, data):
         self._watch.receive(data)
 
-    def closeEvent(self, event):    
-        self._watch.uiDisplayUpdateSignal.disconnect()
-        self._watch.examineSignal.disconnect()
-
+    def closeEvent(self, event):
         self._watchThread.requestInterruption()
         self._watchThread.quit()
         self._watchThread.wait()
@@ -601,7 +597,7 @@ class WatchUI(QtWidgets.QGraphicsView):
             self.scene().addWidget(btn)
             self.btnGroup.addButton(btn, id)
             id += 1
-                
+
         self._pixels = [0] * (display.SCR_WIDTH * display.SCR_HEIGHT)
 
         dot = face.renderer().boundsOnElement("dotBounds")
