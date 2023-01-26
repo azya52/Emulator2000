@@ -14,6 +14,7 @@ class Disassembler():
 
     def __init__(self):
         self._base = '0x%X'
+        self._lblbase = '0x%0.3X'
 
         self._instructions = (
 			Disassembler._add,
@@ -362,7 +363,7 @@ class Disassembler():
 
     def _call(self, opcode, pc):
         imd = (opcode) & 0x1FFF
-        return 'call ' + self._base % imd
+        return 'call ' + self._lblbase % imd
 
     def _ret(self, opcode, pc):
         return 'ret'
@@ -370,43 +371,43 @@ class Disassembler():
     def _cpfjr(self, opcode, pc):
         imd = opcode & 0x1F
         gr = (opcode >> 5) & 0x1F
-        return 'cpfjr ' + GR_STR[gr] + ', ' + self._base % imd
+        return 'cpfjr ' + GR_STR[gr] + ', ' + self._lblbase % (imd + pc + 1)
 
     def _ijmr(self, opcode, pc):
         gr = (opcode >> 5) & 0x1F
         return 'ijmr ' + GR_STR[gr]
 
     def _wfe(self, opcode, pc):
-        return 'wfi'
+        return 'wfe'
 
     def _jmp(self, opcode, pc):
         imd = (opcode) & 0x1FFF
-        return 'jmp ' + self._base % imd
+        return 'jmp ' + self._lblbase % imd
 
     def _jz(self, opcode, pc):
         imd = ((opcode & 0x03FF) | (0xC00 & pc))
-        return 'jz ' + self._base % imd
+        return 'jz ' + self._lblbase % imd
 
     def _jnz(self, opcode, pc):
         imd = ((opcode & 0x03FF) | (0xC00 & pc))
-        return 'jnz ' + self._base % imd
+        return 'jnz ' + self._lblbase % imd
 
     def _jc(self, opcode, pc):
         imd = ((opcode & 0x03FF) | (0xC00 & pc))
-        return 'jc ' + self._base % imd
+        return 'jc ' + self._lblbase % imd
 
     def _jnc(self, opcode, pc):
         imd = ((opcode & 0x03FF) | (0xC00 & pc))
-        return 'jnc ' + self._base % imd
+        return 'jnc ' + self._lblbase % imd
 
     def _btjr(self, opcode, pc):
         imd = opcode & 0x1F
         gr = (opcode >> 5) & 0x1F
         cmp = (opcode >> 10) & 0x03
-        return 'btjr ' + GR_STR[gr] + ', %s' % cmp + ', ' + self._base % imd
+        return 'btjr ' + GR_STR[gr] + ', %s' % cmp + ', ' + self._lblbase % (imd + pc + 1)
 
     def _cpjr(self, opcode, pc):
         imd = opcode & 0x1F
         gr = (opcode >> 5) & 0x1F
         cmp = (opcode >> 10) & 0x03
-        return 'cpjr ' + GR_STR[gr] + ', %s' % cmp + ', ' + self._base % imd
+        return 'cpjr ' + GR_STR[gr] + ', %s' % cmp + ', ' + self._lblbase % (imd + pc + 1)
