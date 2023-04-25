@@ -106,6 +106,9 @@ class Window(QtWidgets.QMainWindow):
         self.dispCtrlTable.resizeColumnsToContents()
 
         groupTool = QtGui.QActionGroup(self)
+        groupTool.addAction(self.actionSpeedx01)
+        groupTool.addAction(self.actionSpeedx02)
+        groupTool.addAction(self.actionSpeedx05)
         groupTool.addAction(self.actionSpeedx1)
         groupTool.addAction(self.actionSpeedx2)
         groupTool.addAction(self.actionSpeedx5)
@@ -249,6 +252,18 @@ class Window(QtWidgets.QMainWindow):
     @pyqtSlot()
     def on_actionStop_triggered(self):
         self._watchUI.stop()
+
+    @pyqtSlot()
+    def on_actionSpeedx01_triggered(self):
+        self._watchUI.setSpeed(10)
+    
+    @pyqtSlot()
+    def on_actionSpeedx02_triggered(self):
+        self._watchUI.setSpeed(5)
+    
+    @pyqtSlot()
+    def on_actionSpeedx05_triggered(self):
+        self._watchUI.setSpeed(2)
 
     @pyqtSlot()
     def on_actionSpeedx1_triggered(self):
