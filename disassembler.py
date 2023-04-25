@@ -169,22 +169,22 @@ class Disassembler():
     def _adm(self, opcode, pc):
         grF = (opcode >> 5) & 0x1F
         grL = (opcode & 0x1F)
-        return 'adm ' + GR_STR[grF] + ', %s' % grL
+        return 'adm ' + GR_STR[grF] + ', ' + GR_STR[grL]
 
     def _adbm(self, opcode, pc):
         grF = (opcode >> 5) & 0x1F
         grL = (opcode & 0x1F)
-        return 'adbm ' + GR_STR[grF] + ', %s' % grL
+        return 'adbm ' + GR_STR[grF] + ', ' + GR_STR[grL]
 
     def _sbm(self, opcode, pc):
         grF = (opcode >> 5) & 0x1F
         grL = (opcode & 0x1F)
-        return 'sbm ' + GR_STR[grF] + ', %s' % grL
+        return 'sbm ' + GR_STR[grF] + ', ' + GR_STR[grL]
 
     def _sbbm(self, opcode, pc):
         grF = (opcode >> 5) & 0x1F
         grL = (opcode & 0x1F)
-        return 'sbbm ' + GR_STR[grF] + ', %s' % grL
+        return 'sbbm ' + GR_STR[grF] + ', ' + GR_STR[grL]
 
     def _cmp(self, opcode, pc):
         grS = opcode & 0x1F
@@ -194,7 +194,7 @@ class Disassembler():
     def _cpm(self, opcode, pc):
         grF = (opcode >> 5) & 0x1F
         grL = (opcode & 0x1F)
-        return 'cpm ' + GR_STR[grF] + ', %s' % grL
+        return 'cpm ' + GR_STR[grF] + ', ' + GR_STR[grL]
 
     def _cpi(self, opcode, pc):
         imd = (opcode >> 1) & 0x0F
@@ -354,12 +354,12 @@ class Disassembler():
     def _mvca(self, opcode, pc):
         grS = opcode & 0x1F
         grD = (opcode >> 5) & 0x1F
-        return 'mvca ' + GR_STR[grD] + ', ' + GR_STR[grS]
+        return 'mvca ' + GR_STR[grD] + ', %s' % grS
 
     def _mvcam(self, opcode, pc):
         grF = (opcode >> 5) & 0x1F
         grL = (opcode & 0x1F)
-        return 'mvcam ' + GR_STR[grF] + ', %s' % grL
+        return 'mvcam ' + GR_STR[grF] + ', ' + GR_STR[grL]
 
     def _call(self, opcode, pc):
         imd = (opcode) & 0x1FFF
