@@ -15,6 +15,7 @@ class Window(QtWidgets.QMainWindow):
         uic.loadUi('ui/main_window.ui', self)
         self._setupUI()
         
+        self._breakpoints = []
         self._settings = QtCore.QSettings('azya', 'Emulator 2000')
         self._loadSettings()
         self._parseArgs()
@@ -36,6 +37,7 @@ class Window(QtWidgets.QMainWindow):
         parser.add_argument('-ext', nargs='?', help='External memory file')
         parser.add_argument('-rom', nargs='?', help='Internal ROM file')
         parser.add_argument('-face', nargs='?', help='Watch face file (*.svg)')
+        parser.add_argument('-bp', nargs='+', help='Breakpoints list')
         args = parser.parse_args()
         if args.ext:
             self._externalMem = args.ext
@@ -43,6 +45,12 @@ class Window(QtWidgets.QMainWindow):
             self._internalMem = args.rom
         if args.face:
             self._face = args.face
+        if args.bp:
+            for pc in args.bp:
+                try:
+                    self._breakpoints.append(int(pc, 0))
+                except ValueError:
+                    pass
 
     def _loadSettings(self):
         geometry = self._settings.value("window/window_geometry",  QByteArray())
@@ -443,7 +451,8 @@ class Window(QtWidgets.QMainWindow):
         if ((self.asmTable.isVisible() or force) and ("LISTING" in info)):
             if self.asmTable.state() != QtWidgets.QAbstractItemView.State.EditingState:
                 self.asmTable.blockSignals(True)
-                if (self.asmTable.rowCount() < len(info["LISTING"])):
+                if (self.asmTable.rowCount() <= len(info["LISTING"])):
+                    self.asmTable.clear()
                     self.asmTable.setRowCount(len(info["LISTING"]))
                 
                 itemAdr = QtWidgets.QTableWidgetItem()
@@ -452,8 +461,10 @@ class Window(QtWidgets.QMainWindow):
                 itemAdr.setCheckState(Qt.CheckState.Unchecked)
 
                 for i, instr in info["LISTING"].items():
-                    self.asmTable.removeRow(i)
                     item = itemAdr.clone()
+                    if (i in self._breakpoints):
+                        item.setCheckState(Qt.CheckState.Checked)
+                        self._watchUI.setBreakpoint(i, True)
                     item.setText('0x%0.3X:' % i)
                     self.asmTable.setItem(i, 0, item)
                     itemOpcode = QtWidgets.QTableWidgetItem(' %0.4X ' % instr[0])
