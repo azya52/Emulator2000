@@ -119,6 +119,10 @@ class Window(QtWidgets.QMainWindow):
         )
         self.portNameCombo.blockSignals(False)
 
+        self.mcyclesLabel = QtWidgets.QLabel("0")
+        self.mcyclesLabel.setToolTip("Machine cycles from previous pause")
+        self.statusBar().addPermanentWidget(self.mcyclesLabel)
+
     def closeEvent(self, event):
         self._saveSettings()
         self._watchUI.close()
@@ -360,6 +364,9 @@ class Window(QtWidgets.QMainWindow):
     def _examine(self, info, force):
         if ("DEBUG" in info):
             self.actionDebug.setChecked(True)
+
+        if (("MC" in info)):
+            self.mcyclesLabel.setText("%d" % info["MC"])
 
         if ((self.pcEdit.isVisible() or force) and ("PC" in info)):
             if (not self.pcEdit.hasFocus()):

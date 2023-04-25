@@ -59,7 +59,9 @@ class Watch(QObject):
         self._breakpoints = {}
         self._debug = False
 
-        self._mcicleTimeNs = MCICLE_TIME_NS
+        self._mcycleTimeNs = MCICLE_TIME_NS
+
+        self._mcyclesOnStop = 0
 
         self.btnPressSignal.connect(self._btnPressed)
         self.btnReleaseSignal.connect(self._btnReleased)
@@ -143,15 +145,13 @@ class Watch(QObject):
         while not(thread.isInterruptionRequested() or self._debug):
             ns = time.perf_counter_ns()
             if (ns > lastTick):                
-                lastTick += self._mcicleTimeNs
+                lastTick += self._mcycleTimeNs
                 self._CPU.clock()
                 self._display.clock()
 
                 if (self._CPU.PC() in self._breakpoints):
-                    self._debug = True
                     self.examineSignal.emit({"DEBUG": True}, False)
-                    self._uiDisplayUpdate()
-                    self._uiExamineUpdate(force = True)
+                    self._pause()
 
             if (ns > lastDisplayUpdate):
                 lastDisplayUpdate += DISPLAY_UPDTE_NS
@@ -172,6 +172,7 @@ class Watch(QObject):
         self._debug = True
         self._uiDisplayUpdate()
         self._uiExamineUpdate(force = True)
+        self._mcyclesOnStop = self._CPU.mcycles()
 
     @pyqtSlot()
     def _step(self):
@@ -238,7 +239,8 @@ class Watch(QObject):
             **self._disassembler.disassemble(self._memory),
             **self._memory.examine(),
             **self._CPU.examine(),
-            **self._display.examine()
+            **self._display.examine(),
+            **{"MC": self._CPU.mcycles() - self._mcyclesOnStop}
         }, force)
 
     @pyqtSlot(int)
@@ -251,7 +253,7 @@ class Watch(QObject):
 
     @pyqtSlot(float)
     def _setSpeed(self, speed):
-        self._mcicleTimeNs = MCICLE_TIME_NS * speed
+        self._mcycleTimeNs = MCICLE_TIME_NS * speed
 
     def debugRun(self):
         self.runSignal.emit()

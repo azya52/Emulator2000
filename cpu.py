@@ -49,6 +49,7 @@ class CPU():
         self._ispTransmitBuffer = 0
 
         self._executionCounter = 0
+        self._mcyclesCounter = 0
 
         self._execute = (
 			CPU._add,
@@ -221,6 +222,9 @@ class CPU():
 
     def PC(self):
         return self._PC
+    
+    def mcycles(self):
+        return self._mcyclesCounter
 
     def _timer0(self):
         self._counter0 += 1
@@ -278,6 +282,7 @@ class CPU():
         if (self._executionCounter <= 0):
             opcode = self._memory.getOpcode(self._PC)
             self._executionCounter = self._execute[opcode >> 10](self, opcode)
+            self._mcyclesCounter += self._executionCounter
             self._PC = self._PC & 0xFFF
     
         return self._executionCounter
