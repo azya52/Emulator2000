@@ -558,7 +558,7 @@ class CPU():
 
         self._PC += 1
 
-        return 1
+        return 1 * len
 
     def _cpi(self, opcode):
         grD = (opcode >> 5) & 0x1F
