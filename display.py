@@ -92,7 +92,7 @@ class Display():
                 else:
                     char = CHARSET[self._DDRAM[charPos]][abs(reflect[1] - dotY)]
                 for dotX in range(DOT_COUNT_X):
-                    pixels[offsetY + charX * DOT_COUNT_X + dotX] = char[abs(reflect[0] - dotX)]  
+                    pixels[offsetY + charX * DOT_COUNT_X + dotX] = char[abs(reflect[0] - dotX)]
 
     def _setPixelOpacity(self):       
         self._pixelOpacity[0] = max((self._contrast - 15) * 6, 0) / 255
@@ -158,6 +158,7 @@ class Display():
 
     def _setCtrlRegForceRedraw(self, value):
         self._DCTRL[0xC] = 1
+        self._scancharCounter &= 0x1FF
     
     def _setCtrlRegBlinkRegs(self, value):
         self._DARAM = [0] * CHAR_COUNT
@@ -174,7 +175,14 @@ class Display():
 
     def writeDDRAMaddr(self, addr, value):
         if (self._DCTRL[0x7] or ((addr == DCTRL_OFFSET + 0x7) and (value & 0x1))):
-            if (not self._DCTRL[0x6] and (self._scancharCounter < (32 * 16))):
+            if (addr == DCTRL_OFFSET + 0x7):
+                if (value & 0x1):
+                    self._scancharCounter -= 1
+                else:
+                    self._scancharCounter += 1
+            if ((not self._DCTRL[0x4] or addr == DCTRL_OFFSET + 0x4) and 
+                (not self._DCTRL[0x6]) and 
+                (self._scancharCounter < (32 * 16))):
                 self._directDraw(self._scancharCounter, value)
             self._scancharCounter += 1
             
@@ -201,8 +209,8 @@ class Display():
             if ((not DCTRL[0x4]) and (not DCTRL[0x6]) and (self._scancharCounter < (32 * 16))):
                 self._drawScenline(self._scancharCounter)
             self._scancharCounter += 4
-
-        if (DCTRL[0xC] and (self._scancharCounter >= (32 * 16))):
+            
+        if (DCTRL[0xC] and ((self._scancharCounter & 0x1FF) == 0)):
             self._scancharCounter = 0
             self._DCTRL[0xC] = 0
 
