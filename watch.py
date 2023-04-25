@@ -6,7 +6,7 @@ import time
 from cpu import CPU
 from display import Display
 from memory import Memory
-from disasembler import Disassembler
+from disassembler import Disassembler
 from beeper import Beeper
 
 FPS = 60

@@ -610,6 +610,28 @@ class WatchUI(QtWidgets.QGraphicsView):
     def _buttonReleased(self, id):
         self._watch.btnReleased(id)
 
+    def mouseMoveEvent(self, event):
+        if (event.buttons() == QtCore.Qt.MouseButton.LeftButton):
+            item = self.scene().itemAt(self.mapToScene(event.pos()), QtGui.QTransform())
+            if isinstance(item, QtWidgets.QGraphicsRectItem):
+                item.setOpacity(1)
+        elif (event.buttons() == QtCore.Qt.MouseButton.RightButton):
+            item = self.scene().itemAt(self.mapToScene(event.pos()), QtGui.QTransform())
+            if isinstance(item, QtWidgets.QGraphicsRectItem):
+                item.setOpacity(0.02)
+        return super().mouseMoveEvent(event)
+
+    def mousePressEvent(self, event):
+        if (event.buttons() == QtCore.Qt.MouseButton.LeftButton):
+            item = self.scene().itemAt(self.mapToScene(event.pos()), QtGui.QTransform())
+            if isinstance(item, QtWidgets.QGraphicsRectItem):
+                item.setOpacity(1)
+        elif (event.buttons() == QtCore.Qt.MouseButton.RightButton):
+            item = self.scene().itemAt(self.mapToScene(event.pos()), QtGui.QTransform())
+            if isinstance(item, QtWidgets.QGraphicsRectItem):
+                item.setOpacity(0.02)
+        return super().mousePressEvent(event)
+
     def _draw(self, faceSVG):
         self.scene().clear()
         self.scene().setItemIndexMethod(QGraphicsScene.ItemIndexMethod.NoIndex)
