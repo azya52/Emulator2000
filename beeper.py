@@ -1,31 +1,37 @@
 import time
     
 from PyQt6.QtCore import QIODeviceBase, QByteArray, QIODevice
-from PyQt6.QtMultimedia import QAudioFormat, QAudioSink
+from PyQt6.QtMultimedia import QAudioFormat, QAudioSink, QMediaDevices
+
+SAMPLE_RATE = 44100
+BUFFER_SIZE = 2048
+SAMPLES_PART_SIZE = 2048
+TONE_S = 1024 / 32768
 
 class ToneGenerator(QIODevice):
-    MAIN_FREQ = 32768
-    INSTRUCTION_S = 8 / MAIN_FREQ
-    TONE_S = 1024 / MAIN_FREQ
-    SAMPLES_PART_SIZE = 1000
-    DATA_PART_SIZE = SAMPLES_PART_SIZE * 2
 
     def __init__(self, format):
         super().__init__()
 
+        channelCount = format.channelCount()
+
         try:
             with open("assets/tone.raw", "rb") as file:
-                self._toneRaw = QByteArray(file.read())
+                raw = QByteArray(file.read())
+                out = QByteArray()
+                out.reserve(len(raw) * channelCount)
+                for i in range(0, len(raw) - 1, 2):
+                    out.append(raw.mid(i, 2) * channelCount)
+                self._toneRaw = out
                 self.open(QIODeviceBase.OpenModeFlag.ReadOnly | QIODeviceBase.OpenModeFlag.Unbuffered)
         except FileNotFoundError as e:
             print(e.strerror, e.filename)
 
         self._pos = 0
         self._toneStarts = []
-        self._bytesPerSample = format.bytesPerSample()
+        self._bytesPerSample = format.bytesPerSample() * channelCount
         self._sampleRate = format.sampleRate()
-        self._toneLength = (int(self._sampleRate * self.TONE_S) + 1) * self._bytesPerSample
-        self._initTime = time.perf_counter()
+        self._toneLength = round(self._sampleRate * TONE_S) * self._bytesPerSample
         
     def readData(self, maxlen):
         data = QByteArray()
@@ -51,27 +57,29 @@ class ToneGenerator(QIODevice):
 
         return data
 
-    def beep(self):
-        goalTime = time.perf_counter() - self._initTime + self.TONE_S
-        goalTime -= goalTime % self.INSTRUCTION_S
-        goalTime -= goalTime % self.TONE_S
-        self._toneStarts.append(self.DATA_PART_SIZE + int(self._sampleRate * goalTime) * self._bytesPerSample)
+    def beep(self, goalTime):
+        if (len(self._toneStarts) == 0):
+            self._pos = int(self._sampleRate * goalTime) * self._bytesPerSample
+        self._toneStarts.append(SAMPLES_PART_SIZE + int(self._sampleRate * goalTime) * self._bytesPerSample)
 
     def bytesAvailable(self):
-        return self.DATA_PART_SIZE
+        return SAMPLES_PART_SIZE * self._bytesPerSample
 
 class TremoloGenerator(QIODevice):
-    MAIN_FREQ = 32768
-    INSTRUCTION_S = 8 / MAIN_FREQ
-    SAMPLES_PART_SIZE = 1000
-    DATA_PART_SIZE = SAMPLES_PART_SIZE * 2
 
     def __init__(self, format):
         super().__init__()
+        
+        channelCount = format.channelCount()
 
         try:
             with open("assets/tremolo.raw", "rb") as file:
-                self._toneRaw = QByteArray(file.read())
+                raw = QByteArray(file.read())
+                out = QByteArray()
+                out.reserve(len(raw) * channelCount)
+                for i in range(0, len(raw) - 1, 2):
+                    out.append(raw.mid(i, 2) * channelCount)
+                self._toneRaw = out
                 self.open(QIODeviceBase.OpenModeFlag.ReadOnly | QIODeviceBase.OpenModeFlag.Unbuffered)
         except FileNotFoundError as e:
             print(e.strerror, e.filename)
@@ -79,8 +87,9 @@ class TremoloGenerator(QIODevice):
         self._pos = 0
         self._toneStarts = []
         self._toneEnds = []
-        self._bytesPerSample = format.bytesPerSample()
+        self._bytesPerSample = format.bytesPerSample() * channelCount
         self._sampleRate = format.sampleRate()
+        self._toneLength = self._toneRaw.size()
         self._initTime = time.perf_counter()
 
     def readData(self, maxlen):
@@ -92,12 +101,12 @@ class TremoloGenerator(QIODevice):
                     chunk = min(maxlen, self._toneStarts[0] - self._pos)
                     data.append(chunk, b'\0')
                 elif (len(self._toneEnds) == 0):
-                    toneRawPos = self._pos % self._toneRaw.size()
-                    chunk = min(maxlen, self._toneRaw.size() - toneRawPos)
+                    toneRawPos = self._pos % self._toneLength
+                    chunk = min(maxlen, self._toneLength - toneRawPos)
                     data.append(self._toneRaw.mid(toneRawPos, chunk))
                 elif (self._pos < self._toneEnds[0]):
-                    toneRawPos = self._pos % self._toneRaw.size()
-                    chunk = min(maxlen, self._toneEnds[0] - self._pos, self._toneRaw.size() - toneRawPos)
+                    toneRawPos = self._pos % self._toneLength
+                    chunk = min(maxlen, self._toneEnds[0] - self._pos, self._toneLength - toneRawPos)
                     data.append(self._toneRaw.mid(toneRawPos, chunk))
                 else:
                     self._toneStarts.pop(0)
@@ -112,36 +121,39 @@ class TremoloGenerator(QIODevice):
 
         return data
 
-    def start(self):
-        if (len(self._toneStarts) == len(self._toneEnds)):
-            goalTime = time.perf_counter() - self._initTime
-            goalTime -= goalTime % self.INSTRUCTION_S
-            self._toneStarts.append(self.DATA_PART_SIZE + int(self._sampleRate * goalTime) * self._bytesPerSample)
-        
-    def stop(self):
+    def start(self, goalTime):
+        goalSample = (SAMPLES_PART_SIZE + round(self._sampleRate * goalTime)) * self._bytesPerSample
         if (len(self._toneStarts) > len(self._toneEnds)):
-            goalTime = time.perf_counter() - self._initTime
-            goalTime -= goalTime % self.INSTRUCTION_S
-            self._toneEnds.append(self.DATA_PART_SIZE + int(self._sampleRate * goalTime) * self._bytesPerSample)
+            self._toneEnds.append(goalSample)
+        if (len(self._toneStarts) == 0):
+            self._pos = round(self._sampleRate * goalTime) * self._bytesPerSample
+        self._toneStarts.append(goalSample)
+        
+    def stop(self, goalTime):
+        if (len(self._toneStarts) > len(self._toneEnds)):
+            self._toneEnds.append(SAMPLES_PART_SIZE + round(self._sampleRate * goalTime) * self._bytesPerSample)
+            self._initTime = time.perf_counter()
+            
     
     def bytesAvailable(self):
-        return self.DATA_PART_SIZE
+        return SAMPLES_PART_SIZE * self._bytesPerSample
 
 class Beeper():
     def __init__(self):
-        format = QAudioFormat()
-        format.setSampleRate(44100)
-        format.setChannelCount(1)
-        format.setSampleFormat(QAudioFormat.SampleFormat.Int16)
+        device = QMediaDevices.defaultAudioOutput()
 
-        self._tremolo = QAudioSink(format)
-        self._tremolo.setBufferSize(2048)
-        self._tremoloGenerator = TremoloGenerator(format)
+        audioFormat = device.preferredFormat()
+        audioFormat.setSampleRate(SAMPLE_RATE)
+        audioFormat.setSampleFormat(QAudioFormat.SampleFormat.Int16)
+
+        self._tremolo = QAudioSink(audioFormat)
+        self._tremolo.setBufferSize(BUFFER_SIZE)
+        self._tremoloGenerator = TremoloGenerator(audioFormat)
         self._tremolo.start(self._tremoloGenerator)
         
-        self._tone = QAudioSink(format)
-        self._tone.setBufferSize(2048)
-        self._toneGenerator = ToneGenerator(format)
+        self._tone = QAudioSink(audioFormat)
+        self._tone.setBufferSize(BUFFER_SIZE)
+        self._toneGenerator = ToneGenerator(audioFormat)
         self._tone.start(self._toneGenerator)   
 
     def stop(self):
@@ -150,11 +162,11 @@ class Beeper():
         self._toneGenerator.close()
         self._tremoloGenerator.close()
         
-    def beep(self):
-        self._toneGenerator.beep()
+    def beep(self, goalTime):
+        self._toneGenerator.beep(goalTime)
 
-    def startTremolo(self):
-        self._tremoloGenerator.start()
+    def startTremolo(self, goalTime):
+        self._tremoloGenerator.start(goalTime)
         
-    def stopTremolo(self):
-        self._tremoloGenerator.stop()
+    def stopTremolo(self, goalTime):
+        self._tremoloGenerator.stop(goalTime)

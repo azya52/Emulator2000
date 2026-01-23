@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1030</width>
-    <height>759</height>
+    <width>977</width>
+    <height>820</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -25,7 +25,7 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_4">
-    <item row="0" column="1">
+    <item row="0" column="0">
      <widget class="QSplitter" name="mainSplitter">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
@@ -972,9 +972,9 @@
             <property name="title">
              <string> Registers</string>
             </property>
-            <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,10,1,10,1,10,1,10,1,10,1,1">
+            <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,10,0,10,0,9,0,7,0,7,0,0">
              <property name="spacing">
-              <number>2</number>
+              <number>1</number>
              </property>
              <item>
               <widget class="QLabel" name="label">
@@ -1078,6 +1078,9 @@
               <widget class="QCheckBox" name="zfCheckBox">
                <property name="layoutDirection">
                 <enum>Qt::RightToLeft</enum>
+               </property>
+               <property name="locale">
+                <locale language="Russian" country="Russia"/>
                </property>
                <property name="text">
                 <string>ZF</string>
@@ -2096,11 +2099,17 @@
          </layout>
         </widget>
         <widget class="QWidget" name="ISPTab">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <attribute name="title">
           <string>ISP</string>
          </attribute>
-         <layout class="QGridLayout" name="gridLayout_5">
-          <item row="1" column="0">
+         <layout class="QVBoxLayout" name="verticalLayout_6">
+          <item>
            <layout class="QHBoxLayout" name="horizontalLayout_2">
             <item>
              <widget class="QLabel" name="label_6">
@@ -2143,7 +2152,314 @@
             </item>
            </layout>
           </item>
-          <item row="3" column="0">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <item>
+             <widget class="QListWidget" name="terminalList"/>
+            </item>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_9">
+              <item>
+               <spacer name="verticalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_10">
+                <property name="spacing">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QToolButton" name="ispCalcButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>CAL.</string>
+                  </property>
+                  <property name="key_code" stdset="0">
+                   <number>16</number>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QToolButton" name="ispCEButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>CE</string>
+                  </property>
+                  <property name="shortcut">
+                   <string>Backspace</string>
+                  </property>
+                  <property name="key_code" stdset="0">
+                   <number>91</number>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QToolButton" name="ispACButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>AC</string>
+                  </property>
+                  <property name="shortcut">
+                   <string>Esc</string>
+                  </property>
+                  <property name="key_code" stdset="0">
+                   <number>93</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_5">
+                <property name="spacing">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QToolButton" name="ispCntUpButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>CNT▲</string>
+                  </property>
+                  <property name="key_code" stdset="0">
+                   <number>31</number>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QToolButton" name="ispCntDwnButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>CNT▼</string>
+                  </property>
+                  <property name="key_code" stdset="0">
+                   <number>18</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_8">
+                <property name="spacing">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QToolButton" name="ispMAButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>M-A</string>
+                  </property>
+                  <property name="key_code" stdset="0">
+                   <number>6</number>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QToolButton" name="ispMBButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>M-B</string>
+                  </property>
+                  <property name="key_code" stdset="0">
+                   <number>7</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QToolButton" name="ispSpaceButton">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>SPACE</string>
+                </property>
+                <property name="shortcut">
+                 <string>Space</string>
+                </property>
+                <property name="key_code" stdset="0">
+                 <number>32</number>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,0">
+                <property name="spacing">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QToolButton" name="ispUpButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>⇧</string>
+                  </property>
+                  <property name="shortcut">
+                   <string>Up</string>
+                  </property>
+                  <property name="key_code" stdset="0">
+                   <number>10</number>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QToolButton" name="ispLeftButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>⇨</string>
+                  </property>
+                  <property name="shortcut">
+                   <string>Right</string>
+                  </property>
+                  <property name="key_code" stdset="0">
+                   <number>9</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_9">
+                <property name="spacing">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QToolButton" name="ispRightButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>⇦</string>
+                  </property>
+                  <property name="shortcut">
+                   <string>Left</string>
+                  </property>
+                  <property name="key_code" stdset="0">
+                   <number>8</number>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QToolButton" name="ispDownButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>⇩</string>
+                  </property>
+                  <property name="shortcut">
+                   <string>Down</string>
+                  </property>
+                  <property name="key_code" stdset="0">
+                   <number>11</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QToolButton" name="ispReturnButton">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>RETURN</string>
+                </property>
+                <property name="shortcut">
+                 <string>Enter</string>
+                </property>
+                <property name="key_code" stdset="0">
+                 <number>13</number>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QToolButton" name="ispResetButton">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>RESET</string>
+                </property>
+                <property name="key_code" stdset="0">
+                 <number>21</number>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+          <item>
            <layout class="QHBoxLayout" name="horizontalLayout_3">
             <item>
              <widget class="QLineEdit" name="serialDataEdit">
@@ -2168,7 +2484,7 @@
             <item>
              <widget class="QCheckBox" name="keyCodesCheckBox">
               <property name="text">
-               <string>Key codes</string>
+               <string>Direct key input</string>
               </property>
              </widget>
             </item>
@@ -2186,9 +2502,6 @@
              </spacer>
             </item>
            </layout>
-          </item>
-          <item row="2" column="0">
-           <widget class="QListWidget" name="terminalList"/>
           </item>
          </layout>
         </widget>
@@ -2382,7 +2695,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1030</width>
+     <width>977</width>
      <height>21</height>
     </rect>
    </property>
@@ -3198,6 +3511,230 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>ispUpButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ispKeyButtonClick()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>925</x>
+     <y>474</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>488</x>
+     <y>409</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ispLeftButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ispKeyButtonClick()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>953</x>
+     <y>474</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>488</x>
+     <y>409</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ispRightButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ispKeyButtonClick()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>925</x>
+     <y>501</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>488</x>
+     <y>409</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ispDownButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ispKeyButtonClick()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>953</x>
+     <y>501</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>488</x>
+     <y>409</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ispCalcButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ispKeyButtonClick()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ispACButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ispKeyButtonClick()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ispCEButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ispKeyButtonClick()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ispMAButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ispKeyButtonClick()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ispMBButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ispKeyButtonClick()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ispResetButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ispKeyButtonClick()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ispCntUpButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ispKeyButtonClick()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ispCntDwnButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ispKeyButtonClick()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ispReturnButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ispKeyButtonClick()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ispSpaceButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ispKeyButtonClick()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>genRegTreeItemChanged()</slot>
@@ -3215,5 +3752,6 @@
   <slot>dispDataTblItemChanged()</slot>
   <slot>dispCtrlTblItemChanged()</slot>
   <slot>serialDataEditTextEdited()</slot>
+  <slot>ispKeyButtonClick()</slot>
  </slots>
 </ui>

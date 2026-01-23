@@ -8,6 +8,8 @@ from PyQt6.QtSerialPort import QSerialPortInfo
 import display
 from watch import Watch
 
+TERMINAL_LIST_SIZE = 100
+
 class Window(QtWidgets.QMainWindow):    
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -246,6 +248,10 @@ class Window(QtWidgets.QMainWindow):
             self.serialDataEdit.clear()
 
     @pyqtSlot()
+    def ispKeyButtonClick(self):
+        self._watchUI.receive(self.sender().property("key_code"))
+
+    @pyqtSlot()
     def on_actionRun_triggered(self):
         self._watchUI.run()
 
@@ -404,7 +410,7 @@ class Window(QtWidgets.QMainWindow):
 
         if ((self.laEdit.isVisible() or force) and ("LA" in info)):
             if (not self.laEdit.hasFocus()):
-                self.laEdit.setText("0x%0.3X" % info["LA"])
+                self.laEdit.setText("0x%0.2X" % info["LA"])
 
         if ((self.cbEdit.isVisible() or force) and ("CB" in info)):
             if (not self.cbEdit.hasFocus()):
@@ -426,10 +432,14 @@ class Window(QtWidgets.QMainWindow):
 
         if ("ISPIN" in info):
             self.terminalList.addItem("< 0x%0.2X" % info["ISPIN"])
+            if self.terminalList.count() > TERMINAL_LIST_SIZE:
+                self.terminalList.takeItem(0)
             self.terminalList.scrollToBottom()
 
         if ("ISPOUT" in info):
             self.terminalList.addItem("> 0x%0.2X" % info["ISPOUT"])
+            if self.terminalList.count() > TERMINAL_LIST_SIZE:
+                self.terminalList.takeItem(0)
             self.terminalList.scrollToBottom()
 
         if ((self.specRegTable.isVisible() or force) and ("SR" in info)):
@@ -507,10 +517,10 @@ class WatchUI(QtWidgets.QGraphicsView):
     MODE_BTN = 3
 
     BTN_HOT_KEYS = {
-        LEFT_BTN: Qt.Key.Key_1,
-        MODE_BTN: Qt.Key.Key_2,
-        TRANSM_BTN: Qt.Key.Key_3,
-        RIGHT_BTN: Qt.Key.Key_4
+        LEFT_BTN: (Qt.Key.Key_1, Qt.Key.Key_Left, Qt.Key.Key_Up),
+        MODE_BTN: (Qt.Key.Key_2, Qt.Key.Key_M),
+        TRANSM_BTN: (Qt.Key.Key_3, Qt.Key.Key_Space),
+        RIGHT_BTN: (Qt.Key.Key_4, Qt.Key.Key_Right, Qt.Key.Key_Down),
     }
     
     editStateSignal = pyqtSignal(dict)
@@ -573,6 +583,8 @@ class WatchUI(QtWidgets.QGraphicsView):
         self._watch.receive(data)
 
     def closeEvent(self, event):
+        self._watch.uiDisplayUpdateSignal.disconnect()
+        self._watch.examineSignal.disconnect()
         self._watchThread.requestInterruption()
         self._watchThread.quit()
         self._watchThread.wait()
@@ -586,14 +598,14 @@ class WatchUI(QtWidgets.QGraphicsView):
     def keyPressEvent(self, event):
         if not event.isAutoRepeat():
             for id, key in self.BTN_HOT_KEYS.items():
-                if (event.key() == key):
+                if (event.key() in key):
                     self._buttonPressed(id)
         return super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event):            
         if not event.isAutoRepeat():
             for id, key in self.BTN_HOT_KEYS.items():
-                if (event.key() == key):
+                if (event.key() in key):
                     self._buttonReleased(id)
         return super().keyReleaseEvent(event)
 
@@ -642,13 +654,14 @@ class WatchUI(QtWidgets.QGraphicsView):
 
         self.btnGroup = QtWidgets.QButtonGroup()
         self.btnGroup.idPressed.connect(self._buttonPressed)
-        self.btnGroup.idReleased.connect(self._buttonReleased)           
-        
+        self.btnGroup.idReleased.connect(self._buttonReleased)
+       
         id = 0
         while (face.renderer().elementExists("button%d" % id)):
             btn = QtWidgets.QPushButton(objectName="watchButton")
             btn.setGeometry(face.renderer().boundsOnElement("button%d" % id).toRect())
-            btn.setToolTip("Shortcut: " + QtGui.QKeySequence(self.BTN_HOT_KEYS[id]).toString()) 
+            btn.setToolTip("Shortcuts: " + ", ".join(QtGui.QKeySequence(i).toString()
+                      for i in self.BTN_HOT_KEYS[id])) 
             self.scene().addWidget(btn)
             self.btnGroup.addButton(btn, id)
             id += 1

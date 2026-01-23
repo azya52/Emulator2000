@@ -47,7 +47,7 @@ class Watch(QObject):
         self._memory = Memory(self._internalMem, self._externalMem)
         self._display = Display()
         self._disassembler = Disassembler()
-        self._CPU = CPU(self._memory, self._display, self._beeper, self._transmit)
+        self._CPU = CPU(self._memory, self._display, self._beeper, self._transmit, MAIN_FREQ)
 
         self._serial = QSerialPort(baudRate=2048)
         self._serial.readyRead.connect(self._serialReadyRead)
@@ -139,27 +139,35 @@ class Watch(QObject):
 
     def _clock(self):
         thread = self.thread().currentThread()
-        lastTick = time.perf_counter_ns()
-        lastExamine = lastTick
-        lastDisplayUpdate = lastTick
+        lastTick = lastExamine = lastDisplayUpdate = time.perf_counter_ns()
         while not(thread.isInterruptionRequested() or self._debug):
             ns = time.perf_counter_ns()
-            if (ns > lastTick):                
-                lastTick += self._mcycleTimeNs
-                self._CPU.clock()
-                self._display.clock()
+            mcycleTimeNs = self._mcycleTimeNs
+            notDebug = not self._debug
+            while (ns > lastTick and ns < lastDisplayUpdate and ns < lastExamine and notDebug):
+                clk = self._CPU.clock()
+                lastTick += mcycleTimeNs * clk
+                self._display.clock(clk)
 
-                if (self._CPU.PC() in self._breakpoints):
+                ns = time.perf_counter_ns()
+
+                if (self._breakpoints and self._CPU.PC() in self._breakpoints):
                     self.examineSignal.emit({"DEBUG": True}, False)
                     self._pause()
-
+                    notDebug = False
+                
             if (ns > lastDisplayUpdate):
                 lastDisplayUpdate += DISPLAY_UPDTE_NS
                 self._uiDisplayUpdate()
             elif (ns > lastExamine):
                 lastExamine += EXAMINE_UPDTE_NS
                 self._uiExamineUpdate()
-            
+            else:
+                if (lastTick > ns + 1000):
+                    time.sleep((lastTick - ns) / 1e9)
+                elif (lastTick < ns):
+                    lastTick = ns
+
             QtCore.QCoreApplication.processEvents()
             
     @pyqtSlot()
@@ -176,9 +184,7 @@ class Watch(QObject):
 
     @pyqtSlot()
     def _step(self):
-        while (self._CPU.clock() > 1):
-            self._display.clock()
-        self._display.clock()
+        self._display.clock(self._CPU.clock())
         self._uiDisplayUpdate()
         self._uiExamineUpdate(force = True)
 
@@ -186,7 +192,7 @@ class Watch(QObject):
     def _stop(self):
         self._debug = True
         self._display = Display()
-        self._CPU = CPU(self._memory, self._display, self._beeper, self._transmit)
+        self._CPU = CPU(self._memory, self._display, self._beeper, self._transmit, MAIN_FREQ)
         self._uiDisplayUpdate()
         self._uiExamineUpdate(force = True)
 
@@ -220,7 +226,6 @@ class Watch(QObject):
     @pyqtSlot(str)
     def _setExternalMem(self, path):
         self._memory.setExternal(path)
-        self._CPU = CPU(self._memory, self._display, self._beeper, self._transmit)
 
     @pyqtSlot(str)
     def _setPortName(self, name):

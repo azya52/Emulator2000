@@ -1,7 +1,6 @@
-b3 = 0x8
-b2 = 0x4
-b1 = 0x2
-b0 = 0x1
+from memory import Memory
+from display import Display
+from beeper import Beeper
 
 STACK_SIZE = 3
 
@@ -13,16 +12,18 @@ SM_RUN = 3
 IM_REGISTERS = 0
 IM_DMA = 1
 
-from memory import Memory
-from display import Display
-from beeper import Beeper
+KEY_LEFT = 0
+KEY_RIGHT = 1
+KEY_TRANSMIT = 2
+KEY_MODE = 3
 
 class CPU():
-    def __init__(self, memory: Memory, display: Display, beeper: Beeper, transmit):
+    def __init__(self, memory: Memory, display: Display, beeper: Beeper, transmit, mainFreq):
         self._display = display
         self._memory = memory
         self._beeper = beeper
         self._transmit = transmit
+        self._mainFreq = mainFreq
         
         self._GR = [[0] * 32 for i in range(4)]
         self._SR = [0] * 16
@@ -179,8 +180,9 @@ class CPU():
     def btnPressed(self, keyCode):
         self._SR[7] |= 0x1 << keyCode
         self._SR[8] |= 0x1 << keyCode
-        self._SR[0] |= b2
-        if (self._stopwatchMode): self._timer1StopwatchProcess(keyCode)
+        self._SR[0] |= 0x4
+        if (self._stopwatchMode): 
+            self._timer1StopwatchProcess(keyCode)
 
     def btnReleased(self, keyCode):
         self._SR[8] &= ~(0x1 << keyCode)
@@ -193,26 +195,26 @@ class CPU():
                     if (not self._ispTransmitEnable):
                         self._memory.writeExternal(data)
                         if (self._memory.SA() & 0xFF == 0):
-                            self._SR[1] |= b1
-                            self._SR[0] |= b3
+                            self._SR[1] |= 0x2
+                            self._SR[0] |= 0x8
                 else:
-                    self._SR[1] |= b0
-                    self._SR[1] |= b2 if (self._ispTransmitEnable) else b0
-                    self._SR[0] |= b3
+                    self._SR[1] |= 0x1
+                    self._SR[1] |= 0x4 if (self._ispTransmitEnable) else 0x1
+                    self._SR[0] |= 0x8
 
-    def _isp(self):
-        self._ispCpunter += 1
-        if (self._ispCpunter % 24 == 0):
+    def _isp(self, clocks):
+        self._ispCpunter += clocks
+        if (self._ispCpunter % 24 < clocks):
             if (self._ispTransmit and self._ispTransmitEnable):
                 if (self._ispMode == IM_DMA):
                     self._ispTransmitBuffer = self._memory.readExternal()
                     if (self._memory.SA() & 0xFF == 0):
-                        self._SR[1] |= b3
-                        self._SR[0] |= b3
+                        self._SR[1] |= 0x8
+                        self._SR[0] |= 0x8
                         self._ispTransmit = False
                 else:
-                    self._SR[1] |= b2
-                    self._SR[0] |= b3
+                    self._SR[1] |= 0x4
+                    self._SR[0] |= 0x8
                     self._ispTransmit = False
                 if (self._transmit != None):
                     self._transmit(self._ispTransmitBuffer)
@@ -226,66 +228,70 @@ class CPU():
     def mcycles(self):
         return self._mcyclesCounter
 
-    def _timer0(self):
-        self._counter0 += 1
-        if (self._counter0 % 128 == 0):
-            if (self._SR[13] & b3 == 0):
-                self._SR[12] |= b3
-        if (self._counter0 % 256 == 0):
-            if (self._SR[13] & b2 == 0):
-                self._SR[12] |= b2
-            self._SR[14] += 1
-            if self._SR[14] > 15:
-                self._SR[14] = 0
-                if (self._SR[13] & b0 == 0):
-                    self._SR[12] |= b0
-                    self._SR[4] = (self._SR[4] + 1) & 0x3
-        if (self._counter0 % 1024 == 0):
-            if (self._SR[13] & b1 == 0):
-                self._SR[12] |= b1
-        if (self._SR[12]):
-            self._SR[0] |= b0
+    def _timer0(self, clocks):
+        self._counter0 += clocks
+        if (self._counter0 % 128 < clocks):
+            if (self._SR[13] & 0x8 == 0):
+                self._SR[12] |= 0x8
 
-    def _timer1(self):
-        if (self._SR[9] & b3):
-            self._counter1 += self._counter1
-            if (self._counter1 % 38 == 0):
+        if (self._counter0 % 256 < clocks):
+            if (self._SR[13] & 0x4 == 0):
+                self._SR[12] |= 0x4
+            self._SR[14] = (self._SR[14] + 1) & 0xF
+
+        if (self._counter0 % 1024 < clocks):
+            if (self._SR[13] & 0x2 == 0):
+                self._SR[12] |= 0x2
+
+        if (self._counter0 % 4096 < clocks):
+            if (self._SR[13] & 0x1 == 0):
+                self._SR[12] |= 0x1
+                self._SR[4] = (self._SR[4] + 1) & 0x3
+
+        if (self._SR[12]):
+            self._SR[0] |= 0x1
+
+    def _timer1(self, clocks):
+        if (self._SR[9] & 0x8):
+            self._counter1 += clocks
+            if (self._counter1 > 40.96):
+                self._counter1 -= 40.96
                 self._SR[10] += 1
                 if self._SR[10] > 9:
                     self._SR[10] = 0
-                    self._SR[9] |= b2
                     self._SR[3] = (self._SR[3] + 1) & 0x3
-    
+                    self._SR[9] |= 0x4
+                    self._SR[0] |= 0x2
+                    
     def _timer1StopwatchProcess(self, keyCode):
-        if (keyCode == 0):
+        if (keyCode == KEY_LEFT):
             if (self._stopwatchMode == SM_RUN):
-                self._SR[9] |= b1    #set stopwatch split flag
-                self._SR[11] = self._SR[10]   #store split value
+                self._SR[9] |= 0x2              #set stopwatch split flag
+                self._SR[11] = self._SR[10]     #store split value
             elif (self._stopwatchMode == SM_STOP):
-                self._SR[9] |= b0    #set stopwatch clear flag
-                self._SR[10] = 0     #clear stopwatch
+                self._SR[9] |= 0x1              #set stopwatch clear flag
+                self._SR[10] = 0                #clear stopwatch
                 self._counter1 = 0
-        if (keyCode == 1):
+            self._SR[0] |= 0x2
+        if (keyCode == KEY_RIGHT):
             if (self._stopwatchMode == SM_RUN):
                 self._stopwatchMode = SM_STOP
-                self._SR[9] &= ~b3
+                self._SR[9] &= ~0x8
             else:
                 self._stopwatchMode = SM_RUN
-                self._SR[9] |= b3
+                self._SR[9] |= 0x8
+                self._SR[0] |= 0x2
             
-    def clock(self):
-        self._timer0()
-        self._timer1()
-        self._isp()
-        
-        self._executionCounter -= 1
-        if (self._executionCounter <= 0):
-            opcode = self._memory.getOpcode(self._PC)
-            self._executionCounter = self._execute[opcode >> 10](self, opcode)
-            self._mcyclesCounter += self._executionCounter
-            self._PC = self._PC & 0xFFF
-    
-        return self._executionCounter
+    def clock(self):     
+        opcode = self._memory.getOpcode(self._PC)
+        mcycles = self._execute[opcode >> 10](self, opcode)
+        self._mcyclesCounter += mcycles
+
+        self._timer0(mcycles)
+        self._timer1(mcycles)
+        self._isp(mcycles)
+
+        return mcycles
     
     def _op0x3C(self, opcode):
         adOp = (opcode >> 9) & 0x01
@@ -321,7 +327,7 @@ class CPU():
 
         self._CF = 1 if self._GR[self._CB][grD] > 15 else 0
         self._GR[self._CB][grD] &= 0xF
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -336,7 +342,7 @@ class CPU():
         self._CF = 1 if self._GR[self._CB][grD] > 9 else 0
         if (self._CF): self._GR[self._CB][grD] -= 10
         self._GR[self._CB][grD] &= 0xF
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -351,7 +357,7 @@ class CPU():
         self._ZF = 0 if (self._GR[self._CB][grD]) else 1
         self._CF = 1 if (self._GR[self._CB][grD] < 0) else 0
         self._GR[self._CB][grD] &= 0xF
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -367,7 +373,7 @@ class CPU():
         self._CF = self._GR[self._CB][grD] < 0
         self._GR[self._CB][grD] -= 6 * self._CF
         self._GR[self._CB][grD] &= 0xF
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -381,7 +387,7 @@ class CPU():
 
         self._CF = self._GR[self._CB][grD] > 15
         self._GR[self._CB][grD] &= 0xF
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -396,7 +402,7 @@ class CPU():
         self._CF = self._GR[self._CB][grD] > 9
         self._GR[self._CB][grD] -= 10 * self._CF
         self._GR[self._CB][grD] &= 0xF
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -411,7 +417,7 @@ class CPU():
         self._ZF = self._GR[self._CB][grD] == 0
         self._CF = self._GR[self._CB][grD] < 0
         self._GR[self._CB][grD] &= 0xF
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -427,7 +433,7 @@ class CPU():
         self._CF = self._GR[self._CB][grD] < 0
         self._GR[self._CB][grD] -= 6 * self._CF
         self._GR[self._CB][grD] &= 0xF
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -450,7 +456,7 @@ class CPU():
             self._CF = self._GR[self._CB][grD] > 15
             self._GR[self._CB][grD] &= 0xF
 
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1 * len
 
@@ -474,7 +480,7 @@ class CPU():
             self._GR[self._CB][grD] -= 10 * self._CF
             self._GR[self._CB][grD] &= 0xF
 
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1 * len
 
@@ -499,7 +505,7 @@ class CPU():
             self._CF = 1 if (self._GR[self._CB][grD] < 0) else 0
             self._GR[self._CB][grD] &= 0xF
 
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1 * len
 
@@ -525,7 +531,7 @@ class CPU():
             self._GR[self._CB][grD] -= 6 * self._CF
             self._GR[self._CB][grD] &= 0xF
 
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1 * len
 
@@ -538,7 +544,7 @@ class CPU():
         self._ZF = self._GR[self._CB][grD] == self._GR[self._CB][grS]
         self._CF = self._GR[self._CB][grD] < self._GR[self._CB][grS]
 
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -561,7 +567,7 @@ class CPU():
             self._ZF &= self._GR[self._CB][grD] == (self._GR[self._CB][grS] + self._CF)
             self._CF = self._GR[self._CB][grD] < (self._GR[self._CB][grS] + self._CF)
 
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1 * len
 
@@ -573,7 +579,7 @@ class CPU():
 
         self._ZF = self._GR[self._CB][grD] == imd
         self._CF = self._GR[self._CB][grD] < imd
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
         
         return 1
 
@@ -583,7 +589,7 @@ class CPU():
         self._bSA = (self._bSA >> 4) | (self._GR[self._CB][grD] << 8)
 
         self._CB = (opcode >> 3) & 0x03
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -593,7 +599,7 @@ class CPU():
         self._bSA = (self._bSA >> 4) | (self._GR[self._CB][grD] << 8)
 
         self._AB = (opcode >> 3) & 0x03
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -605,7 +611,7 @@ class CPU():
 
         self._GR[self._CB][grD] &= imd
         self._ZF = self._GR[self._CB][grD] == 0
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -616,7 +622,7 @@ class CPU():
         self._bSA = (self._bSA >> 4) | (self._GR[self._CB][grD] << 8)
 
         self._GR[self._CB][grD] |= imd
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -627,7 +633,7 @@ class CPU():
         self._bSA = (self._bSA >> 4) | (self._GR[self._CB][grD] << 8)
 
         self._GR[self._CB][grD] ^= imd
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -648,7 +654,7 @@ class CPU():
             self._CF = self._GR[self._CB][grD] > 15
             self._GR[self._CB][grD] &= 0xF
 
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1 * len
 
@@ -670,7 +676,7 @@ class CPU():
             self._GR[self._CB][grD] -= 10 * self._CF
             self._GR[self._CB][grD] &= 0xF
 
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1 * len
 
@@ -693,7 +699,7 @@ class CPU():
             self._CF = self._GR[self._CB][grD] < 0
             self._GR[self._CB][grD] &= 0xF
 
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1 * len
 
@@ -717,7 +723,7 @@ class CPU():
             self._GR[self._CB][grD] -= 6 * self._CF
             self._GR[self._CB][grD] &= 0xF
 
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1 * len
 
@@ -736,7 +742,7 @@ class CPU():
             self._GR[self._CB][grD] = self._GR[self._CB][grS]
         
         self._GR[self._CB][grHi] = 0
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1 * len
 
@@ -755,7 +761,7 @@ class CPU():
             self._GR[self._CB][grD] = self._GR[self._CB][grS]
        
         self._GR[self._CB][grLo] = 0
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
         
         return 1 * len
 
@@ -766,7 +772,7 @@ class CPU():
         self._bSA = (self._bSA >> 4) | (self._GR[self._CB][grD] << 8)
 
         self._GR[self._CB][grD] = self.srRead(srS)
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -777,7 +783,7 @@ class CPU():
         self._bSA = (self._bSA >> 4) | (self._GR[self._CB][grS] << 8)
 
         self._srWrite[srD](self, self._GR[self._CB][grS])
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -790,7 +796,7 @@ class CPU():
         imd = (opcode >> 6) & 0x0F
 
         self._srWrite[srD](self, imd)
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -806,7 +812,7 @@ class CPU():
             self._bSA = (self._bSA >> 4) | (self._GR[self._CB][grS] << 8)
  
         self._memory.setSA(self._bSA)
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1 * len
 
@@ -827,7 +833,7 @@ class CPU():
         if (len > 1):
             self._display.setLA(LA)
 
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1 * len
 
@@ -846,7 +852,7 @@ class CPU():
 
             self._GR[self._CB][grD] = (self._memory.readExternal() >> 4) & 0x0F
 
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1 * len
 
@@ -864,7 +870,7 @@ class CPU():
             
             self._memory.writeExternal((self._GR[self._CB][grS] << 4) | (self._GR[self._CB][grP] & 0x0F))
 
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1 * len
 
@@ -882,7 +888,7 @@ class CPU():
             
             self._display.writeDDRAM((self._GR[self._CB][grS] << 4) | (self._GR[self._CB][grP] & 0x0F))
 
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1 * len
 
@@ -892,7 +898,7 @@ class CPU():
         self._bSA = (self._bSA >> 4) | (self._GR[self._CB][grS] << 8)
 
         self._display.writeDDRAM(self._GR[self._CB][grS] | 0x30)
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -901,7 +907,7 @@ class CPU():
         self._bSA = (self._bSA >> 4) | (self._GR[self._CB][grD] << 8)
 
         self._memory.setSA(opcode)
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -910,7 +916,7 @@ class CPU():
         self._bSA = (self._bSA >> 4) | (self._GR[self._CB][grD] << 8)
 
         self._display.setLA(((opcode >> 2) & 0xF8) | (opcode & 0x07))
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -919,7 +925,7 @@ class CPU():
         self._bSA = (self._bSA >> 4) | (self._GR[self._CB][grD] << 8)
 
         self._display.writeDDRAM(self._memory.readExternal())
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -930,7 +936,7 @@ class CPU():
         imd = ((opcode >> 2) & 0xF8) | (opcode & 0x07)
 
         self._display.writeDDRAMaddr(imd, self._memory.readExternal())
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -940,7 +946,7 @@ class CPU():
 
         imd = ((opcode >> 2) & 0xF8) | (opcode & 0x07)
         self._display.writeDDRAM(imd)
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -950,7 +956,7 @@ class CPU():
 
         imd = ((opcode >> 2) & 0xF8) | (opcode & 0x07)
         self._display.writeDDRAMaddr(imd, imd)
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -961,7 +967,7 @@ class CPU():
         self._bSA = (self._bSA >> 4) | (self._GR[self._CB][grD] << 8)
 
         self._GR[self._CB][grD] = self._GR[self._CB][grS]
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -980,7 +986,7 @@ class CPU():
 
             self._GR[self._CB][grD] = self._GR[self._CB][grS]
 
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1 * len
 
@@ -991,7 +997,7 @@ class CPU():
         self._bSA = (self._bSA >> 4) | (self._GR[self._CB][grD] << 8)
 
         self._GR[self._CB][grD] = imd
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -1008,7 +1014,7 @@ class CPU():
 
             self._GR[self._CB][grD] = 0
 
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1 * len
 
@@ -1019,7 +1025,7 @@ class CPU():
         self._bSA = (self._bSA >> 4) | (self._GR[self._CB][grD] << 8)
 
         self._GR[self._AB][grD] = self._GR[self._CB][grS]
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -1038,7 +1044,7 @@ class CPU():
 
             self._GR[self._AB][grD] = self._GR[self._CB][grS]
 
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1 * len
 
@@ -1049,7 +1055,7 @@ class CPU():
         self._bSA = (self._bSA >> 4) | (self._GR[self._CB][grD] << 8)
 
         self._GR[self._CB][grD] = self._GR[self._AB][grS]
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -1068,7 +1074,7 @@ class CPU():
 
             self._GR[self._CB][grD] = self._GR[self._AB][grS]
 
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1 * len
 
@@ -1076,11 +1082,10 @@ class CPU():
         grD = (opcode >> 5) & 0x1F
         self._bSA = (self._bSA >> 4) | (self._GR[self._CB][grD] << 8)
 
-        imd = (opcode & 0xFFF)
         self._STACK.append(self._PC)
         if (len(self._STACK) > STACK_SIZE):
             self._STACK.pop(0)
-        self._PC = imd
+        self._PC = opcode & 0xFFF
 
         return 1
 
@@ -1090,7 +1095,7 @@ class CPU():
 
         if (len(self._STACK) > 0):
             self._PC = self._STACK.pop()
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -1101,7 +1106,7 @@ class CPU():
         imd = opcode & 0x1F
         gr = (opcode >> 5) & 0x1F
         if (self._GR[self._CB][gr] == 4): self._PC += imd
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -1111,7 +1116,7 @@ class CPU():
         self._bSA = (self._bSA >> 4) | (self._GR[self._CB][gr] << 8)
 
         self._PC += self._GR[self._CB][gr]
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -1120,7 +1125,7 @@ class CPU():
         self._bSA = (self._bSA >> 4) | (self._GR[self._CB][grD] << 8)
 
         if (self._SR[0] != 0):
-            self._PC += 1
+            self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -1139,7 +1144,7 @@ class CPU():
         if (self._ZF):
             self._PC = ((opcode & 0x03FF) | (0xC00 & self._PC))
         else: 
-            self._PC += 1
+            self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -1150,7 +1155,7 @@ class CPU():
         if (not self._ZF):
             self._PC = ((opcode & 0x03FF) | (0xC00 & self._PC))
         else:
-            self._PC += 1
+            self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -1161,7 +1166,7 @@ class CPU():
         if (self._CF):
             self._PC = ((opcode & 0x03FF) | (0xC00 & self._PC))
         else:
-            self._PC += 1
+            self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -1172,7 +1177,7 @@ class CPU():
         if (not self._CF):
             self._PC = ((opcode & 0x03FF) | (0xC00 & self._PC))
         else:
-            self._PC += 1
+            self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -1184,7 +1189,7 @@ class CPU():
         self._bSA = (self._bSA >> 4) | (self._GR[self._CB][gr] << 8)
 
         if (self._GR[self._CB][gr] & (1 << cmp)): self._PC += imd
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -1196,7 +1201,7 @@ class CPU():
         self._bSA = (self._bSA >> 4) | (self._GR[self._CB][gr] << 8)
 
         if (self._GR[self._CB][gr] == cmp): self._PC += imd
-        self._PC += 1
+        self._PC = (self._PC + 1) & 0xFFF
 
         return 1
 
@@ -1206,7 +1211,7 @@ class CPU():
             self._SR[sr] = 0
 
         if (sr == 15):
-            self._SR[15] &= ~b0
+            self._SR[15] &= ~0x1
 
         return res
 
@@ -1221,13 +1226,13 @@ class CPU():
         self._SR[2] &= 0x0
 
     def _sr3Write(self, value):
-        self._ispMode = value & b0
-        self._ispTransmitEnable = (value & b1) > 0
+        self._ispMode = value & 0x1
+        self._ispTransmitEnable = (value & 0x2) > 0
         return
 
     def _sr4Write(self, value):
-        self._ispReceiveEnable = (value & b1) > 0
-        self._ispTransmit = (value & b0) > 0
+        self._ispReceiveEnable = (value & 0x2) > 0
+        self._ispTransmit = (value & 0x1) > 0
         return
 
     def _sr5Write(self, value):
@@ -1244,23 +1249,24 @@ class CPU():
         return
 
     def _sr9Write(self, value):
-        self._SR[9] &= ~(value & ~b3)  #clear SR9.0 - SR9.2
-        if (self._SR[9] == 0):
+        self._SR[9] &= ~(value & 0x7)
+        if ((self._SR[9] & 0x7) == 0):
             self._SR[0] &= 0xD
 
     def _sr10Write(self, value):
-        if (value & b3):
-            self._SR[9] |= b3
-        if (value & b2):
-            self._SR[9] &= ~b3
-        if (value & b1):
+        if (value & 0x8):
+            self._stopwatchMode = SM_DISABLE
+            self._SR[9] |= 0x8
+        if (value & 0x4):
+            self._stopwatchMode = SM_DISABLE
+            self._SR[9] &= ~0x8
+        if (value & 0x2):
             self._SR[10] = 0
             self._counter1 = 0
-        if (value & b0):
+            self._stopwatchMode = SM_DISABLE
+        if (value & 0x1):
             if (self._stopwatchMode == SM_DISABLE):
                 self._stopwatchMode = SM_ENABLE
-        else:
-            self._stopwatchMode = SM_DISABLE
 
     def _sr11Write(self, value):
         return
@@ -1277,10 +1283,9 @@ class CPU():
         self._SR[14] = 0
 
     def _sr15Write(self, value):
-        if (value & 0b0001):
-            self._beeper.beep()
-        if (value & 0b0100):
-            self._beeper.startTremolo()
-        if (value & 0b0010):
-            self._beeper.stopTremolo()
-        return
+        if (value & 0b001):
+            self._beeper.beep(self._mcyclesCounter / self._mainFreq)
+        if (value & 0b100):
+            self._beeper.startTremolo(self._mcyclesCounter / self._mainFreq)
+        if (value & 0b010):
+            self._beeper.stopTremolo(self._mcyclesCounter / self._mainFreq)

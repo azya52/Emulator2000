@@ -197,24 +197,25 @@ class Display():
     def setLA(self, value):
         self._LA = value
 
-    def clock(self):
-        DCTRL = self._DCTRL
+    def clock(self, clocks):
+        for _  in range(clocks):
+            DCTRL = self._DCTRL
 
-        if (not (self._counter & 0x3FF)):
-            if (DCTRL[0x8]):
+            if (not (self._counter & 0x3FF)):
+                if (DCTRL[0x8]):
+                    self._scancharCounter = 0
+                self._updateBlinkChar()
+
+            if (not DCTRL[0x7]):       
+                if ((not DCTRL[0x4]) and (not DCTRL[0x6]) and (self._scancharCounter < (32 * 16))):
+                    self._drawScenline(self._scancharCounter)
+                self._scancharCounter += 4
+                
+            if (DCTRL[0xC] and ((self._scancharCounter & 0x1FF) == 0)):
                 self._scancharCounter = 0
-            self._updateBlinkChar()
+                self._DCTRL[0xC] = 0
 
-        if (not DCTRL[0x7]):       
-            if ((not DCTRL[0x4]) and (not DCTRL[0x6]) and (self._scancharCounter < (32 * 16))):
-                self._drawScenline(self._scancharCounter)
-            self._scancharCounter += 4
-            
-        if (DCTRL[0xC] and ((self._scancharCounter & 0x1FF) == 0)):
-            self._scancharCounter = 0
-            self._DCTRL[0xC] = 0
-
-        self._counter += 1
+            self._counter += 1
 
     def setDDRAM(self, addr, value):
         self.writeDDRAMaddr(addr + DDRAM_OFFSET, value)
